@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/ramfox/fullmoon/store"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func Play(s *store.State, r *bufio.Reader, w *bufio.Writer) {
@@ -41,11 +43,16 @@ func Play(s *store.State, r *bufio.Reader, w *bufio.Writer) {
 	}
 }
 
-func Setup(r *bufio.Reader, w *bufio.Writer) *store.State {
+func Setup(r *bufio.Reader, w *bufio.Writer) (*store.State, error) {
 	w.WriteString("Enter magic word: ")
 	w.Flush()
-	mw, _ := r.ReadString('\n')
-	return store.NewState(strings.Replace(mw, "\n", "", -1))
+	byteMW, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		return nil, fmt.Errorf("error reading magic word: %s", err)
+	}
+	mw := string(byteMW)
+	fmt.Printf(mw)
+	return store.NewState(strings.Replace(mw, "\n", "", -1)), nil
 }
 
 func WriteRed(w *bufio.Writer, s string) error {
