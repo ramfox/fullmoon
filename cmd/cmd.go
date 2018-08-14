@@ -19,12 +19,11 @@ var rootCmd = &cobra.Command{
 		writer := bufio.NewWriter(os.Stdout)
 
 		gameState, err := game.Setup(reader, writer)
-		if err != nil {
-			game.WriteRed(writer, err.Error())
-			os.Exit(1)
+		for err != nil {
+			game.WriteRed(writer, fmt.Sprintf("\n%s", err))
+			gameState, err = game.Setup(reader, writer)
 		}
-		writer.WriteString(("\033[H\033[2J"))
-		writer.Flush()
+		game.Clear(writer)
 		game.Play(gameState, reader, writer)
 	},
 }

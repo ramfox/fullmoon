@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"strings"
+	"unicode"
 )
 
 type State struct {
@@ -12,35 +13,25 @@ type State struct {
 	guessed    []string
 }
 
-func NewState(mw string) *State {
-	return &State{strings.ToLower(mw), NewLetters(), 0, NewGuessed(mw)}
+func NewState(mw string) (*State, error) {
+	if strings.Contains(mw, "_") {
+		return nil, fmt.Errorf("magic word cannot contain an underscore.")
+	}
+
+	mw = strings.Trim(mw, " \n\t")
+	return &State{strings.ToLower(mw), NewLetters(), 0, NewGuessed(mw)}, nil
 }
 
 func NewGuessed(mw string) []string {
+
 	guessed := make([]string, len(mw))
 
-	// create list of possible indices for the spaces letter
-	indices := []int{}
-	temp_mw := mw
-
-	for {
-		index := strings.Index(temp_mw, " ")
-
-		if index == -1 {
-			break
+	for i, char := range mw {
+		if unicode.IsLetter(char) {
+			guessed[i] = "_"
+			continue
 		}
-
-		indices = append(indices, index)
-
-		if index+1 >= len(temp_mw) {
-			break
-		}
-
-		temp_mw = strings.Replace(temp_mw, " ", "*", 1)
-	}
-
-	for _, num := range indices {
-		guessed[num] = " "
+		guessed[i] = string(char)
 	}
 
 	return guessed
