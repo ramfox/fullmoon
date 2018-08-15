@@ -18,13 +18,15 @@ var rootCmd = &cobra.Command{
 		reader := bufio.NewReader(os.Stdin)
 		writer := bufio.NewWriter(os.Stdout)
 
-		gameState, err := game.Setup(reader, writer)
-		for err != nil {
-			game.WriteRed(writer, fmt.Sprintf("\n%s", err))
-			gameState, err = game.Setup(reader, writer)
+		for {
+			gameState, err := game.Setup(reader, writer)
+			for err != nil {
+				game.WriteRed(writer, fmt.Sprintf("\n%s", err))
+				gameState, err = game.Setup(reader, writer)
+			}
+			game.Play(gameState, reader, writer)
+			game.PlayAgain(reader, writer)
 		}
-		game.Clear(writer)
-		game.Play(gameState, reader, writer)
 	},
 }
 

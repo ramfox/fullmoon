@@ -1,4 +1,4 @@
-package store
+package state
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ type State struct {
 	letters    Letters
 	rounds     int
 	guessed    []string
+	phase      MoonPhase
 }
 
 func NewState(mw string) (*State, error) {
@@ -19,7 +20,7 @@ func NewState(mw string) (*State, error) {
 	}
 
 	mw = strings.Trim(mw, " \n\t")
-	return &State{strings.ToLower(mw), NewLetters(), 0, NewGuessed(mw)}, nil
+	return &State{strings.ToLower(mw), NewLetters(), 0, NewGuessed(mw), WaningGibbous}, nil
 }
 
 func NewGuessed(mw string) []string {
@@ -51,12 +52,20 @@ func (l Letters) MarkUsed(letter string) {
 	l[letter] = true
 }
 
-func (s *State) Guess(letter string) string {
-	letter = strings.ToLower(letter)
+func (s *State) GuessWord(guess string) (bool, string) {
+	if guess == s.Reveal() {
+		return true, ""
+	}
+	return false, fmt.Sprintf("Wrong! The magic word is not '%s'. Guess again.", guess)
+}
 
+func (s *State) GuessLetter(letter string) (bool, string) {
+	if len(letter) > 1 {
+		letter = string(letter[0])
+	}
 	// check if the letter has been guessed already
 	if s.letters.IsUsed(letter) {
-		return fmt.Sprintf("You have guessed the letter '%s' already.", letter)
+		return true, fmt.Sprintf("You have guessed the letter '%s' already.", letter)
 	}
 
 	// record that the letter has been guessed
@@ -85,7 +94,7 @@ func (s *State) Guess(letter string) string {
 	}
 
 	if len(indices) == 0 {
-		return fmt.Sprintf("Wrong! Guess again.")
+		return false, fmt.Sprintf("Wrong! Guess again.")
 	}
 
 	// add the letters to the proper places in the guessed slice
@@ -93,7 +102,7 @@ func (s *State) Guess(letter string) string {
 		s.guessed[num] = letter
 	}
 
-	return ""
+	return true, ""
 }
 
 func (s *State) Reveal() string {
@@ -110,4 +119,16 @@ func (s *State) Guessed() string {
 		g += letter
 	}
 	return g
+}
+
+func (s *State) WrongGuess() {
+	s.phase++
+}
+
+func (s *State) GameOver() bool {
+	return s.phase == FullMoon
+}
+
+func (s *State) Phase() string {
+	return s.phase.String()
 }
